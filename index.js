@@ -48,7 +48,7 @@ let persons = [
 
 
 app.get('/', function (req, res) {
-  res.sendFile(path.join(__dirname, 'build', 'index.html'));
+  res.sendFile(path.join('build', 'index.html'));
 });
 
   app.get('/info', (req, res) => {
