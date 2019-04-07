@@ -47,9 +47,7 @@ let persons = [
 ]
 
 
-app.get('/', function (req, res) {
-  res.sendFile(path.join('build', 'index.html'));
-});
+
 
   app.get('/info', (req, res) => {
     res.send(`<p>Puhelinluettelossa ${persons.length} henkilön tiedot</p><p>${new Date()}</p>`)
