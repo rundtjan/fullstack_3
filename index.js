@@ -8,7 +8,9 @@ app.use(cors())
 
 app.use(bodyParser.json())
 
-app.use(express.static(path.join(__dirname, 'build')));
+app.use(express.static('build'));
+
+//app.use(express.static(path.join(__dirname, 'build')));
 
 
 let persons = [
@@ -43,6 +45,8 @@ let persons = [
     "id": 10
   }
 ]
+
+
 app.get('/', function (req, res) {
   res.sendFile(path.join(__dirname, 'build', 'index.html'));
 });
