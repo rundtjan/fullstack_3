@@ -1,5 +1,6 @@
 const express = require('express')
 const app = express()
+const path = require('path');
 const bodyParser = require('body-parser')
 const cors = require('cors')
 
@@ -7,7 +8,7 @@ app.use(cors())
 
 app.use(bodyParser.json())
 
-app.use(express.static('build'))
+app.use(express.static(path.join(__dirname, 'build')));
 
 
 let persons = [
@@ -42,6 +43,10 @@ let persons = [
     "id": 10
   }
 ]
+app.get('/', function (req, res) {
+  res.sendFile(path.join(__dirname, 'build', 'index.html'));
+});
+
   app.get('/info', (req, res) => {
     res.send(`<p>Puhelinluettelossa ${persons.length} henkilön tiedot</p><p>${new Date()}</p>`)
   })
