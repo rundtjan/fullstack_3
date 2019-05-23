@@ -70,7 +70,11 @@ const virheet = (error, req, res, next) => {
 app.use(virheet)
 
   app.get('/info', (req, res) => {
-    res.send(`<p>Puhelinluettelossa ${persons.length} henkilön tiedot</p><p>${new Date()}</p>`)
+    Person.find().then(persons => {
+      
+      res.send(`<p>Puhelinluettelossa ${persons.length} henkilön tiedot</p><p>${new Date()}</p>`)
+    })
+    
   })
   
   app.get('/api/persons', (req, res) => {
