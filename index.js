@@ -1,17 +1,21 @@
+require('dotenv').config()
+console.log(process.env.MONGODB_URI, process.env.PORT)
 const express = require('express')
 const app = express()
 const path = require('path');
 const bodyParser = require('body-parser')
 const cors = require('cors')
+const morgan = require('morgan')
+const Person = require('./models/person')
+const PORT = process.env.PORT
 
 app.use(cors())
 
 app.use(bodyParser.json())
 
+app.use(morgan('tiny'))
+
 app.use(express.static('build'));
-
-//app.use(express.static(path.join(__dirname, 'build')));
-
 
 let persons = [
   {
@@ -51,39 +55,67 @@ app.get('/', (req, res) => {
   res.send("test")
 })
 */
+const virheet = (error, req, res, next) => {
+  console.error(error.message)
+
+  if (error.name === 'CastError' && error.kind == 'ObjectId') {
+    return res.status(400).send({ error: 'id on vääräässä muodossa' })
+  } else if (error.name === 'ValidationError') {
+    return res.status(400).json({ error: error.message })
+  }
+
+  next(error)
+}
+
+app.use(virheet)
+
   app.get('/info', (req, res) => {
     res.send(`<p>Puhelinluettelossa ${persons.length} henkilön tiedot</p><p>${new Date()}</p>`)
   })
   
   app.get('/api/persons', (req, res) => {
-    res.json(persons)
+    Person.find().then(persons => {
+      const persons2 = persons.map(person => person.toJSON())
+      res.json(persons2)
+    })
   })
 
-  app.get('/api/persons/:id', (req, res) => {
-    const id = Number(req.params.id)
-    const person = persons.find(person => person.id === id)
-    if (person) {
-        res.json(person)
-      } else {
-        res.status(404).end()
-      }
+  app.get('/api/persons/:id', (req, res, next) => {
+    Person.findById(req.params.id)
+      .then(person => {
+        if (person) {
+          res.json(person.toJSON())
+        } else {
+          res.status(404).end()
+        }
+      })
+      .catch(error => next(error))
   })
 
-  app.delete('/api/persons/:id', (req, res) => {
-    const id = Number(req.params.id);
-    persons = persons.filter(person => person.id !== id);
-  
-    res.status(204).end();
-  });
+  app.delete('/api/persons/:id', (req, res, next) => {
+    Person.findByIdAndRemove(req.params.id)
+      .then(result => {
+        res.status(204).end()
+      })
+      .catch(error => next(error))
+  })
 
-  const generateId = () => {
-    const maxId = notes.length > 0
-      ? Math.max(...notes.map(n => n.id))
-      : 0
-    return maxId + 1
-  }
+  app.put('/api/persons/:id', (req, res, next) => {
+    const body = req.body
+
+    const person = {
+      name: body.name,
+      number: body.number,
+    }
+    Person.findByIdAndUpdate(req.params.id, person, {new : true})
+    .then(updatedPerson => {
+      res.json(updatedPerson.toJSON())
+    })
+    .catch(error => next(error))
+  })
+
   
-  app.post('/api/persons', (req, res) => {
+  app.post('/api/persons', (req, res, next) => {
     const body = req.body
   
     if (!body.name || !body.number) {
@@ -92,26 +124,24 @@ app.get('/', (req, res) => {
       })
     }
 
-    const names = persons.map(person => person.name)
-
-    if (names.includes(body.name)){
-      return res.status(400).json({ 
-        error: 'nimi löytyy jo luettelosta' 
-      })
-    }
-  
-    const person = {
+    const person = new Person({
       name: body.name,
       number: body.number,
-      id: Math.floor(Math.random() * 10000000),
-    }
-  
-    persons = persons.concat(person)
-  
-    res.json(person)
+    })
+
+    person.save().then(savedPerson => {
+      res.json(savedPerson.toJSON())
+    })
+    .catch(error => next(error))
+
   })
   
-  const PORT = process.env.PORT || 3001
+  const eiLoydy = (req, res) => {
+    res.status(404).send({ error: 'Osoitetta ei löydy' })
+  }
+
+  app.use(eiLoydy)
+
   app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`)
   })
